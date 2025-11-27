@@ -444,7 +444,9 @@ public class Parser {
                 Files.copy(i.toPath(), destDir.resolve(getRelativePath(userDir, i.getAbsolutePath())), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException exc) {
+            System.err.println("Failed to backup user files. Stacktrace:");
             exc.printStackTrace();
+            System.exit(1);
         }
         System.out.println("User files copied successfully");
 
@@ -484,6 +486,7 @@ public class Parser {
                 }
             }
         } catch (IOException | JsonParseException ex) {
+            System.err.println("Failed to parse file. Stacktrace:");
             ex.printStackTrace();
             System.exit(1);
 
@@ -527,6 +530,7 @@ public class Parser {
 
         try {
             for (FilePair i : parsedFiles) {
+                System.out.println("Writing " + i.name);
                 File file = new File(userDir + File.separator + i.name);
                 file.getParentFile().mkdirs();
                 FileWriter fw = new FileWriter(file);
@@ -534,6 +538,7 @@ public class Parser {
                 fw.close();
             }
         } catch (IOException exc) {
+            System.err.println("Failed to write file. Stacktrace:");
             exc.printStackTrace();
             System.exit(1);
         }
