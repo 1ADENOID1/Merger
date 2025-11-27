@@ -1,2 +1,2 @@
-java -jar target/JSONpars-1.0-SNAPSHOT-jar-with-dependencies.jar Parser C:\\Users\\azaytsev\\Desktop\\resources C:\\Users\\azaytsev\\Desktop\\resources1 C:\\Users\\azaytsev\\Desktop\\userBackup
+java -jar target/JSONpars-1.0-SNAPSHOT-jar-with-dependencies.jar Parser C:\\Users\\azaytsev\\Desktop\\serv\\config C:\\Users\\azaytsev\\Desktop\\serv1\\config C:\\Users\\azaytsev\\Desktop\\userBackup true
 pause

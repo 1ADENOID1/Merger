@@ -399,6 +399,7 @@ public class Parser {
         String distrDir = arg[1]/*"C:\\Users\\azaytsev\\Desktop\\serv\\config"*/;
         String userDir = arg[2]/*"C:\\Users\\azaytsev\\Desktop\\serv1\\config"*/;
         String backupUserFiles = arg[3]/*"C:\\Users\\azaytsev\\Desktop\\userBackup"*/;
+        boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
 
         System.out.println("Distributive directory: " + distrDir);
         System.out.println("User directory: " + userDir);
@@ -412,8 +413,20 @@ public class Parser {
         if (!destFile.isDirectory()) {
             throw new IOException("Backup path is not a directory");
         }
-        if (destFile.list().length != 0) {
+        if (!createNewDirToBackup && destFile.list().length != 0) {
             throw new IOException("Backup directory must be empty");
+        }
+        else if (createNewDirToBackup) {
+
+            String folderName = "Backup";
+            destFile = new File(backupUserFiles += (File.separator + folderName));
+            int i = 0;
+            while (Files.exists(destFile.toPath())) {
+                i++;
+                destFile = new File(backupUserFiles + i);
+            }
+
+            Files.createDirectories(destFile.toPath());
         }
 
         if (!distr.isDirectory()) {
