@@ -10,7 +10,6 @@ import java.util.*;
 class JsonMap {
     private final char separator = ' ';
 
-    private final CharSequence cs = " ";
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
     public JsonMap(Map<String, JsonElement> map) {
@@ -72,10 +71,6 @@ class JsonMap {
                     deletedKeys.add(i.getKey());
 
                     for (Map.Entry<String, JsonElement> j : i.getValue().getAsJsonObject().entrySet()) {
-                        //if (j.getKey().contains(cs)) {
-                        //    throw new JsonParseException("Empty character was found in json field: " + j.getKey() + ": " + j.getValue());
-                        //}
-
                         addMap.put(i.getKey() + this.separator + j.getKey().replaceAll(String.valueOf(separator), "_"), j.getValue());
                     }
                 }
@@ -139,8 +134,7 @@ class JsonMap {
             }
         }
 
-        Map<String, JsonElement> jsonCopy = new LinkedHashMap<>();
-        jsonCopy.putAll(this.jsonMap);
+        Map<String, JsonElement> jsonCopy = new LinkedHashMap<>(this.jsonMap);
 
         do {
             ArrayList<String> usedObjects = new ArrayList<>();
@@ -286,8 +280,10 @@ class Merger {
                     break;
                 }
 
-                if (userElem.getKey().startsWith(defaultElem.getKey())
-                        || defaultElem.getKey().startsWith(userElem.getKey())) {   //Взятие значения из пользовательских файлов если оно задано (
+
+
+                if (!distrRootArrayFounded && (userElem.getKey().startsWith(defaultElem.getKey())
+                        || defaultElem.getKey().startsWith(userElem.getKey()))) {   //Взятие значения из пользовательских файлов если оно задано (
 
                     foundedInUserElements = true;
                     mergedMap.put(userElem.getKey(), userElem.getValue());
@@ -295,7 +291,7 @@ class Merger {
                 }
 
                 for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
-                    if (!userElem.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElem.getKey())) {
+                    if (distrRootArrayFounded || !userElem.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElem.getKey())) {
                         mergedMap.put(userElem.getKey(), userElem.getValue());
                     }
                 }
@@ -344,6 +340,7 @@ public class Parser {
         return filesToList(dir, true);
     }
     public static List<File> filesToList(File dir, boolean ignoreNotJsonFiles) {
+
         List<File> expandedFileList = new ArrayList<>(Arrays.asList(dir.listFiles()));
 
         boolean hasDirs;
@@ -357,7 +354,7 @@ public class Parser {
                 if (file.isDirectory()) {
                     hasDirs = true;
 
-                    List<File> includedFiles = Arrays.asList(file.listFiles());
+                    File[] includedFiles = file.listFiles();
                     distrExpandedFileListIterator.remove();
 
                     for (File i : includedFiles) {
