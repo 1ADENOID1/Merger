@@ -254,56 +254,60 @@ class Merger {
         boolean userRootArrayFounded = false;
         boolean distrRootArrayFounded = false;
 
-        for (Map.Entry<String, JsonElement> defaultElem : this.defaultSettings.getJsonMap().entrySet()) {
-            boolean foundedInUserElements = false;
+        if (this.defaultSettings.getJsonMap().size() == 0) {           //Если defaultSettings пуст, то цикл не откроется
+            mergedMap.putAll(this.userSettings.getJsonMap());
+        }
+        else {
+            for (Map.Entry<String, JsonElement> defaultElem : this.defaultSettings.getJsonMap().entrySet()) {
+                boolean foundedInUserElements = false;
 
-            if (defaultElem.getKey() == null) {
-                if (this.defaultSettings.getJsonMap().size() != 1) {
-                    throw new JsonIOException("Json root is array, but json map length is not 1");
-                }
-
-                distrRootArrayFounded = true;
-            }
-
-            for (Map.Entry<String, JsonElement> userElem : this.userSettings.getJsonMap().entrySet()) {
-
-                if (userElem.getKey() == null) {
-                    if (this.userSettings.getJsonMap().size() != 1) {
+                if (defaultElem.getKey() == null) {
+                    if (this.defaultSettings.getJsonMap().size() != 1) {
                         throw new JsonIOException("Json root is array, but json map length is not 1");
                     }
 
-                    //if (distrRootArrayFounded) {
-                        mergedMap.put(null, userElem.getValue());
-                    //}
+                    distrRootArrayFounded = true;
 
-                    userRootArrayFounded = true;
+                }
+                for (Map.Entry<String, JsonElement> userElem : this.userSettings.getJsonMap().entrySet()) {
+
+                    if (userElem.getKey() == null) {
+                        if (this.userSettings.getJsonMap().size() != 1) {
+                            throw new JsonIOException("Json root is array, but json map length is not 1");
+                        }
+
+                        //if (distrRootArrayFounded) {
+                        mergedMap.put(null, userElem.getValue());
+                        //}
+
+                        userRootArrayFounded = true;
+                        break;
+                    }
+
+
+                    if (!distrRootArrayFounded && (userElem.getKey().startsWith(defaultElem.getKey())
+                            || defaultElem.getKey().startsWith(userElem.getKey()))) {   //Взятие значения из пользовательских файлов если оно задано (
+
+                        foundedInUserElements = true;
+                        mergedMap.put(userElem.getKey(), userElem.getValue());
+
+                    }
+
+                    for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
+                        if (distrRootArrayFounded || !userElem.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElem.getKey())) {
+                            mergedMap.put(userElem.getKey(), userElem.getValue());
+                        }
+                    }
+                }
+
+                if (userRootArrayFounded || distrRootArrayFounded) {
+
                     break;
                 }
 
-
-
-                if (!distrRootArrayFounded && (userElem.getKey().startsWith(defaultElem.getKey())
-                        || defaultElem.getKey().startsWith(userElem.getKey()))) {   //Взятие значения из пользовательских файлов если оно задано (
-
-                    foundedInUserElements = true;
-                    mergedMap.put(userElem.getKey(), userElem.getValue());
-
+                if (!foundedInUserElements) {                                               //Добавление новых полей из дистрибутива
+                    mergedMap.put(defaultElem.getKey(), defaultElem.getValue());
                 }
-
-                for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
-                    if (distrRootArrayFounded || !userElem.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElem.getKey())) {
-                        mergedMap.put(userElem.getKey(), userElem.getValue());
-                    }
-                }
-            }
-
-            if (userRootArrayFounded || distrRootArrayFounded) {
-
-                break;
-            }
-
-            if (!foundedInUserElements) {                                               //Добавление новых полей из дистрибутива
-                mergedMap.put(defaultElem.getKey(), defaultElem.getValue());
             }
         }
 
