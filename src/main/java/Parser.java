@@ -139,7 +139,7 @@ class JsonMap {
         do {
             ArrayList<String> usedObjects = new ArrayList<>();
             Map<String, JsonElement> addMap = new LinkedHashMap<>();
-            List<String> deletedItems = new ArrayList<>();
+            //List<String> deletedItems = new ArrayList<>();
 
             for (Map.Entry<String, JsonElement> element : jsonCopy.entrySet()) {
 
@@ -173,7 +173,7 @@ class JsonMap {
                         }
                     }
 
-                    deletedItems.add(element.getKey());
+                    //deletedItems.add(element.getKey());
                 }
 
                 Map<String, JsonElement> copyJsonCopy = new LinkedHashMap<>(jsonCopy);
