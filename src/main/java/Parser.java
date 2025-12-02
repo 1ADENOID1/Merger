@@ -376,7 +376,6 @@ public class Parser {
     }
 
     public static void main(String[] arg) throws IOException {
-        System.setProperty("file.encoding", "UTF-8");
 
         if (arg.length < 5) {
             String output;
@@ -401,10 +400,19 @@ public class Parser {
         }
         boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
 
+        String fileEncoding;
+        if (arg.length < 6 || arg[5] == null) {
+            fileEncoding = "UTF-8";
+        } else {
+            fileEncoding = arg[5];
+        }
+        System.out.println("Setup file encoding: " + fileEncoding);
+        System.setProperty("file.encoding", fileEncoding);
 
         System.out.println("Distributive directory: " + distrDir);
         System.out.println("User directory: " + userDir);
         System.out.println("Backup directory: " + backupUserFiles);
+        System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to backup directory root"));
 
 
         File distr = new File(distrDir);
