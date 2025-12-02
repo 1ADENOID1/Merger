@@ -212,22 +212,22 @@ class JsonMap {
         return this.jsonMap;
     }
 
-    public void changePropertyValue(String key, JsonElement value) {
+    public void changePropertyValue(String key, JsonElement value) {                            //Зарезервировано для версии с GUI
         this.jsonMap.replace(key, value);
         expandJsonObjects();
     }
 
-    public void addProperty(String key, JsonElement value) {
+    public void addProperty(String key, JsonElement value) {                                    //Зарезервировано для версии с GUI
         this.jsonMap.put(key, value);
         expandJsonObjects();
 
     }
 
-    public void deleteProperty(String key) {
+    public void deleteProperty(String key) {                                                     //Зарезервировано для версии с GUI
         this.jsonMap.remove(key);
     }
 
-    void printJsonMap() {
+    void printJsonMap() {                                                                        //Для отладки
         for (Map.Entry<String, JsonElement> i : this.jsonMap.entrySet()) {
             System.out.println("key: " + i.getKey() + " Value: " + i.getValue());
         }
@@ -378,22 +378,29 @@ public class Parser {
     public static void main(String[] arg) throws IOException {
         System.setProperty("file.encoding", "UTF-8");
 
-        if (arg.length < 4) {
+        if (arg.length < 5) {
             String output;
             switch (arg.length) {
-                case 1: output="Default"; break;
-                case 2: output="User"; break;
-                case 3: output="Backup"; break;
+                case 1: output="Default directory is not defined"; break;
+                case 2: output="User directory is not defined"; break;
+                case 3: output="Backup directory is not defined"; break;
+                case 4: output="Parameter \"Create new directory for backup\" is not defined"; break;
                 default: output="";
             }
-            System.out.println(output + " directory is not defined");
+            System.out.println(output);
             System.exit(1);
         }
 
         String distrDir = arg[1]/*"C:\\Users\\azaytsev\\Desktop\\serv\\config"*/;
         String userDir = arg[2]/*"C:\\Users\\azaytsev\\Desktop\\serv1\\config"*/;
         String backupUserFiles = arg[3]/*"C:\\Users\\azaytsev\\Desktop\\userBackup"*/;
+
+        if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
+            System.err.println("Parameter \"Create new directory for backup\" must be true or false");
+            System.exit(1);
+        }
         boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
+
 
         System.out.println("Distributive directory: " + distrDir);
         System.out.println("User directory: " + userDir);

@@ -1,2 +1,7 @@
-java -jar target/JSONpars-1.0-SNAPSHOT-jar-with-dependencies.jar Parser C:\\Users\\azaytsev\\Desktop\\serv\\config C:\\Users\\azaytsev\\Desktop\\serv1\\config C:\\Users\\azaytsev\\Desktop\\userBackup true
+set DISTR_DIR=C:\\Users\\azaytsev\\Desktop\\serv\\config
+set USER_DIR=C:\\Users\\azaytsev\\Desktop\\serv1\\config
+set BACKUP_DIR=C:\\Users\\azaytsev\\Desktop\\userBackup
+set CREATE_BACKUP_SUBDIR=true
+
+java -jar target/JSONpars-1.0-SNAPSHOT-jar-with-dependencies.jar Parser %DISTR_DIR% %USER_DIR% %BACKUP_DIR% %CREATE_BACKUP_SUBDIR%
 pause
