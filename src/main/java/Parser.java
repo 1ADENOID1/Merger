@@ -414,7 +414,6 @@ public class Parser {
         System.out.println("Backup directory: " + backupUserFiles);
         System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to backup directory root"));
 
-
         File distr = new File(distrDir);
         File user = new File(userDir);
         File destFile = new File(backupUserFiles);
