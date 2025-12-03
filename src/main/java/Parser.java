@@ -107,8 +107,6 @@ class JsonMap {
                 }
             }
         }
-        //printJsonMap();
-        //System.out.println(toJson().toString());
     }
 
     public JsonElement toJson() {
@@ -345,6 +343,10 @@ public class Parser {
     }
     public static List<File> filesToList(File dir, boolean ignoreNotJsonFiles) {
 
+        if (dir.listFiles() == null) {
+            return new ArrayList<>();
+        }
+
         List<File> expandedFileList = new ArrayList<>(Arrays.asList(dir.listFiles()));
 
         boolean hasDirs;
@@ -361,8 +363,10 @@ public class Parser {
                     File[] includedFiles = file.listFiles();
                     distrExpandedFileListIterator.remove();
 
-                    for (File i : includedFiles) {
-                        distrExpandedFileListIterator.add(i);
+                    if (includedFiles != null) {
+                        for (File i : includedFiles) {
+                            distrExpandedFileListIterator.add(i);
+                        }
                     }
                 }
             }
@@ -390,9 +394,9 @@ public class Parser {
             System.exit(1);
         }
 
-        String distrDir = arg[1]/*"C:\\Users\\azaytsev\\Desktop\\serv\\config"*/;
-        String userDir = arg[2]/*"C:\\Users\\azaytsev\\Desktop\\serv1\\config"*/;
-        String backupUserFiles = arg[3]/*"C:\\Users\\azaytsev\\Desktop\\userBackup"*/;
+        String distrDir = arg[1];
+        String userDir = arg[2];
+        String backupUserFiles = arg[3];
 
         if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
             System.err.println("Parameter \"Create new directory for backup\" must be true or false");
@@ -419,10 +423,12 @@ public class Parser {
         File destFile = new File(backupUserFiles);
 
         if (!destFile.isDirectory()) {
-            throw new IOException("Backup path is not a directory");
+           System.err.println("Backup path is not found or is not a directory");
+           System.exit(1);
         }
         if (!createNewDirToBackup && destFile.list().length != 0) {
-            throw new IOException("Backup directory must be empty");
+            System.err.println("Backup directory must be empty");
+            System.exit(1);
         }
         else if (createNewDirToBackup) {
 
@@ -438,10 +444,12 @@ public class Parser {
         }
 
         if (!distr.isDirectory()) {
-            throw new IOException("Distr path is not a directory");
+            System.err.println("Distributive path is not found or is not a directory");
+            System.exit(1);
         }
         if (!user.isDirectory()) {
-            throw new IOException("User path is not a directory");
+            System.err.println("User path is not found or is not a directory");
+            System.exit(1);
         }
 
 
@@ -509,16 +517,6 @@ public class Parser {
 
         System.out.println("Files parsed successfully");
 
-        /*for (FilePair i : parsedFiles) {
-            System.out.println("Name " + i.name);
-            System.out.println("Distr ");
-            i.distrSettings.printJsonMap();
-
-            System.out.println("User ");
-            i.userSettings.printJsonMap();
-            System.out.println("\n");
-        }*/
-
         System.out.println("Merging the files");
 
         ListIterator<FilePair> parsedFilesIterator = parsedFiles.listIterator();
@@ -533,12 +531,6 @@ public class Parser {
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-        //Gson gson = new Gson();
-
-        /*for (FilePair i : parsedFiles) {
-            System.out.println(i.name + "\n" + gson.toJson(i.userSettings.toJson()));
-            //i.userSettings.printJsonMap();
-        }*/
 
         System.out.println("Files merged successfully");
         System.out.println("Writing the changes to user files");
