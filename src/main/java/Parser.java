@@ -156,14 +156,14 @@ class JsonMap {
 
                     if (usedObjects.contains(keyWithoutObjectName)) {
                         JsonElement obj = addMap.get(keyWithoutObjectName);
-                        obj.getAsJsonObject().add(objectName, element.getValue());
+                        obj.getAsJsonObject().add(objectName.replaceAll("_", String.valueOf(this.separator)), element.getValue());
                         jsonCopy.replace(keyWithoutObjectName, obj);
 
                     } else {
                         if (separatorPos >= 0) {
                             usedObjects.add(keyWithoutObjectName);
                             JsonObject obj = new JsonObject();
-                            obj.add(objectName, element.getValue());
+                            obj.add(objectName.replaceAll("_", String.valueOf(this.separator)), element.getValue());
                             addMap.put(keyWithoutObjectName, obj);
                         } else {
                             addMap.put(objectName, element.getValue());
@@ -187,12 +187,22 @@ class JsonMap {
                                       && copyJsonCopyElement.getKey().charAt(addMapElement.getKey().length()) == separator)
                         )) {
                             fromAddMap = true;
-                            jsonCopy.put(addMapElement.getKey(), addMapElement.getValue());
+                            CharSequence cs = String.valueOf(this.separator);
+                            if (!addMapElement.getKey().contains(cs)) {
+                                jsonCopy.put(addMapElement.getKey().replaceAll("_", String.valueOf(this.separator)), addMapElement.getValue());
+                            } else {
+                                jsonCopy.put(addMapElement.getKey(), addMapElement.getValue());
+                            }
                         }
                     }
 
                     if (!fromAddMap) {
-                        jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
+                        CharSequence cs = String.valueOf(this.separator);
+                        if (!copyJsonCopyElement.getKey().contains(cs)) {
+                            jsonCopy.put(copyJsonCopyElement.getKey().replaceAll("_", String.valueOf(this.separator)), copyJsonCopyElement.getValue());
+                        } else {
+                            jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
+                        }
                     }
                 }
 
