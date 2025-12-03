@@ -137,7 +137,6 @@ class JsonMap {
         do {
             ArrayList<String> usedObjects = new ArrayList<>();
             Map<String, JsonElement> addMap = new LinkedHashMap<>();
-            //List<String> deletedItems = new ArrayList<>();
 
             for (Map.Entry<String, JsonElement> element : jsonCopy.entrySet()) {
 
@@ -170,9 +169,8 @@ class JsonMap {
                             addMap.put(objectName, element.getValue());
                         }
                     }
-
-                    //deletedItems.add(element.getKey());
                 }
+            }
 
                 Map<String, JsonElement> copyJsonCopy = new LinkedHashMap<>(jsonCopy);
                 jsonCopy = new LinkedHashMap<>();
@@ -197,7 +195,6 @@ class JsonMap {
                         jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
                     }
                 }
-            }
 
             depth--;
         } while (depth > 0);
@@ -504,7 +501,7 @@ public class Parser {
 
                 if (!pairFounded && distrFile.isFile()) {
                     System.out.println("Parsing distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
-                    userFileJsonMap = new JsonMap(distrFileJsonMap.toJson());
+                    userFileJsonMap = new JsonMap(distrFileJsonMap);
                     parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                 }
             }
@@ -524,7 +521,7 @@ public class Parser {
             FilePair pair = parsedFilesIterator.next();
             System.out.println("Merging file pair: " + pair.name);
             Merger pairMerger = new Merger(pair.userSettings, pair.distrSettings);
-            pair.userSettings = new JsonMap(pairMerger.getMerged().toJson());
+            pair.userSettings = new JsonMap(pairMerger.getMerged());
             parsedFilesIterator.remove();
             parsedFilesIterator.add(pair);
 
