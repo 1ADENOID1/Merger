@@ -172,39 +172,44 @@ class JsonMap {
                 }
             }
 
-                Map<String, JsonElement> copyJsonCopy = new LinkedHashMap<>(jsonCopy);
-                jsonCopy = new LinkedHashMap<>();
+            Map<String, JsonElement> copyJsonCopy = new LinkedHashMap<>(jsonCopy);
+            jsonCopy = new LinkedHashMap<>();
 
-                for (Map.Entry<String, JsonElement> copyJsonCopyElement : copyJsonCopy.entrySet()) {
+            for (Map.Entry<String, JsonElement> copyJsonCopyElement : copyJsonCopy.entrySet()) {
 
-                    boolean fromAddMap = false;
+                boolean fromAddMap = false;
 
-                    for (Map.Entry<String, JsonElement> addMapElement : addMap.entrySet()) {
+                for (Map.Entry<String, JsonElement> addMapElement : addMap.entrySet()) {
 
-                        if (copyJsonCopyElement.getKey().startsWith(addMapElement.getKey()) && (
+                    if (
+                            copyJsonCopyElement.getKey().startsWith(addMapElement.getKey()) &&
+                            (
                                 copyJsonCopyElement.getKey().length() == addMapElement.getKey().length()
-                                || (copyJsonCopyElement.getKey().length() > addMapElement.getKey().length()
-                                      && copyJsonCopyElement.getKey().charAt(addMapElement.getKey().length()) == separator)
-                        )) {
-                            fromAddMap = true;
-                            CharSequence cs = String.valueOf(this.separator);
-                            if (!addMapElement.getKey().contains(cs)) {
-                                jsonCopy.put(addMapElement.getKey().replaceAll("_", String.valueOf(this.separator)), addMapElement.getValue());
-                            } else {
-                                jsonCopy.put(addMapElement.getKey(), addMapElement.getValue());
-                            }
-                        }
-                    }
-
-                    if (!fromAddMap) {
+                                    || (copyJsonCopyElement.getKey().length() > addMapElement.getKey().length()
+                                        && copyJsonCopyElement.getKey().charAt(addMapElement.getKey().length()) == separator
+                                    )
+                            )
+                    ) {
+                        fromAddMap = true;
                         CharSequence cs = String.valueOf(this.separator);
-                        if (!copyJsonCopyElement.getKey().contains(cs)) {
-                            jsonCopy.put(copyJsonCopyElement.getKey().replaceAll("_", String.valueOf(this.separator)), copyJsonCopyElement.getValue());
+
+                        if (!addMapElement.getKey().contains(cs)) {
+                            jsonCopy.put(addMapElement.getKey().replaceAll("_", String.valueOf(this.separator)), addMapElement.getValue());
                         } else {
-                            jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
+                            jsonCopy.put(addMapElement.getKey(), addMapElement.getValue());
                         }
                     }
                 }
+
+                if (!fromAddMap) {
+                    CharSequence cs = String.valueOf(this.separator);
+                    if (!copyJsonCopyElement.getKey().contains(cs)) {
+                        jsonCopy.put(copyJsonCopyElement.getKey().replaceAll("_", String.valueOf(this.separator)), copyJsonCopyElement.getValue());
+                    } else {
+                        jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
+                    }
+                }
+            }
 
             depth--;
         } while (depth > 0);
