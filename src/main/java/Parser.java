@@ -490,6 +490,7 @@ public class Parser {
                 JsonMap userFileJsonMap;
                 boolean pairFounded = false;
 
+                System.out.println("Parsing distributive file: " + distrFile.getAbsolutePath());
                 distrFileJsonMap = new JsonMap(distrFile);
 
                 String distrRelativeFilePath = getRelativePath(distrDir, distrFile.getAbsolutePath());
@@ -499,18 +500,19 @@ public class Parser {
                     String userRelativeFilePath = getRelativePath(userDir, userFile.getAbsolutePath());
 
                     if (distrRelativeFilePath.equals(userRelativeFilePath) && distrFile.isFile() && userFile.isFile()) {
-                        System.out.println("Parsing file pair: " + distrRelativeFilePath + " " + userRelativeFilePath);
                         pairFounded = true;
 
+                        System.out.println("Parsing user file: " + user.getAbsolutePath());
                         userFileJsonMap = new JsonMap(userFile);
                         parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
+                        System.out.println("Parsed file pair: " + distrRelativeFilePath + " " + userRelativeFilePath);
 
                         break;
                     }
                 }
 
                 if (!pairFounded && distrFile.isFile()) {
-                    System.out.println("Parsing distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
+                    System.out.println("Parsed distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
                     userFileJsonMap = new JsonMap(distrFileJsonMap);
                     parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                 }
