@@ -1,5 +1,5 @@
-set DISTR_DIR=C:\\Users\\azaytsev\\Desktop\\serv\\config
-set USER_DIR=C:\\Users\\azaytsev\\Desktop\\serv1\\config
+set DISTR_DIR=C:\\Users\\azaytsev\\Desktop\\resources
+set USER_DIR=C:\\Users\\azaytsev\\Desktop\\resources1
 set BACKUP_DIR=C:\\Users\\azaytsev\\Desktop\\userBackup
 set CREATE_BACKUP_SUBDIR=true
 set FILE_ENCODING=UTF-8

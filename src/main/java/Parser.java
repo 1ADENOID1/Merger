@@ -268,7 +268,7 @@ class Merger {
 
                 if (defaultElem.getKey() == null) {
                     if (this.defaultSettings.getJsonMap().size() != 1) {
-                        throw new JsonIOException("Json root is array, but json map length is not 1");
+                        throw new JsonParseException("Json root is array, but json map length is not 1");
                     }
 
                     distrRootArrayFounded = true;
@@ -278,7 +278,7 @@ class Merger {
 
                     if (userElem.getKey() == null) {
                         if (this.userSettings.getJsonMap().size() != 1) {
-                            throw new JsonIOException("Json root is array, but json map length is not 1");
+                            throw new JsonParseException("Json root is array, but json map length is not 1");
                         }
 
                         //if (distrRootArrayFounded) {
