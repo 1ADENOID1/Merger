@@ -12,6 +12,8 @@ class JsonMap {
 
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
+    private Map<String, List<Integer>> replacedSeparatorChars = new HashMap<>();
+
     public JsonMap(Map<String, JsonElement> map) {
         this.jsonMap = new LinkedHashMap<>(map);
     }
@@ -25,13 +27,33 @@ class JsonMap {
 
     public JsonMap(JsonMap anotherJsonMap) {
         this.jsonMap = new LinkedHashMap<>(anotherJsonMap.jsonMap);
+        this.replacedSeparatorChars = new HashMap<>(anotherJsonMap.replacedSeparatorChars);
+    }
+
+    private List<Integer> getReplacedSeparatorsIndex(String key) {
+        List<Integer> result = new ArrayList<>();
+
+        for (int i = 0; i < key.length(); i++) {
+            if (key.charAt(i) == this.separator) {
+                result.add(i);
+            }
+        }
+
+        return result;
     }
 
     private void fromJsonElement(JsonElement elem) {
         //this.jsonMap.putAll(elem.getAsJsonObject().asMap());
         if (elem.isJsonObject()) {
             for (Map.Entry<String, JsonElement> i : elem.getAsJsonObject().asMap().entrySet()) {
+
+                List<Integer> replacedSeparators = new ArrayList<>(getReplacedSeparatorsIndex(i.getKey()));
                 this.jsonMap.put(i.getKey().replaceAll(String.valueOf(separator), "_"), i.getValue());
+
+                if (!replacedSeparators.isEmpty()) {
+                    replacedSeparatorChars.put(i.getKey().replaceAll(String.valueOf(separator), "_"), replacedSeparators);
+                }
+
             }
         } else if (elem.isJsonArray()) {
             this.jsonMap.put(null, elem.getAsJsonArray());
@@ -71,7 +93,14 @@ class JsonMap {
                     deletedKeys.add(i.getKey());
 
                     for (Map.Entry<String, JsonElement> j : i.getValue().getAsJsonObject().entrySet()) {
+
+                        List<Integer> replacedSeparators = new ArrayList<>(getReplacedSeparatorsIndex(j.getKey()));
+
                         addMap.put(i.getKey() + this.separator + j.getKey().replaceAll(String.valueOf(separator), "_"), j.getValue());
+
+                        if (!replacedSeparators.isEmpty()) {
+                            replacedSeparatorChars.put(j.getKey().replaceAll(String.valueOf(separator), "_"), replacedSeparators);
+                        }
                     }
                 }
             }
@@ -107,6 +136,8 @@ class JsonMap {
                 }
             }
         }
+
+        System.out.println(replacedSeparatorChars);
     }
 
     public JsonElement toJson() {
@@ -507,7 +538,7 @@ public class Parser {
                     if (distrRelativeFilePath.equals(userRelativeFilePath) && distrFile.isFile() && userFile.isFile()) {
                         pairFounded = true;
 
-                        System.out.println("Parsing user file: " + user.getAbsolutePath());
+                        System.out.println("Parsing user file: " + userFile.getAbsolutePath());
                         userFileJsonMap = new JsonMap(userFile);
                         parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                         System.out.println("Parsed file pair: " + distrRelativeFilePath + " " + userRelativeFilePath);
