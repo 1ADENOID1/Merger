@@ -14,8 +14,9 @@ class JsonMap {
 
     private Map<String, List<Integer>> replacedSeparatorChars = new HashMap<>();
 
-    public JsonMap(Map<String, JsonElement> map) {
+    public JsonMap(Map<String, JsonElement> map, Map<String, List<Integer>> separatorMap) {
         this.jsonMap = new LinkedHashMap<>(map);
+        this.replacedSeparatorChars = new HashMap<>(separatorMap);
     }
     public JsonMap(File inputFile) throws IOException {
         fromFile(inputFile);
@@ -187,14 +188,34 @@ class JsonMap {
 
                     if (usedObjects.contains(keyWithoutObjectName)) {
                         JsonElement obj = addMap.get(keyWithoutObjectName);
-                        obj.getAsJsonObject().add(objectName.replaceAll("_", String.valueOf(this.separator)), element.getValue());
+
+                        StringBuilder sbKey = new StringBuilder(objectName);
+                        if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
+                            for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
+                                if (sbKey.charAt(i) == '_') {
+                                    sbKey.setCharAt(i, this.separator);
+                                }
+                            }
+                        }
+
+                        obj.getAsJsonObject().add(sbKey.toString(), element.getValue());
                         jsonCopy.replace(keyWithoutObjectName, obj);
 
                     } else {
                         if (separatorPos >= 0) {
                             usedObjects.add(keyWithoutObjectName);
                             JsonObject obj = new JsonObject();
-                            obj.add(objectName.replaceAll("_", String.valueOf(this.separator)), element.getValue());
+
+                            StringBuilder sbKey = new StringBuilder(objectName);
+                            if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
+                                for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
+                                    if (sbKey.charAt(i) == '_') {
+                                        sbKey.setCharAt(i, this.separator);
+                                    }
+                                }
+                            }
+
+                            obj.add(sbKey.toString(), element.getValue());
                             addMap.put(keyWithoutObjectName, obj);
                         } else {
                             addMap.put(objectName, element.getValue());
@@ -225,7 +246,15 @@ class JsonMap {
                         CharSequence cs = String.valueOf(this.separator);
 
                         if (!addMapElement.getKey().contains(cs)) {
-                            jsonCopy.put(addMapElement.getKey().replaceAll("_", String.valueOf(this.separator)), addMapElement.getValue());
+                            StringBuilder sbKey = new StringBuilder(addMapElement.getKey());
+                            if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
+                                for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
+                                    if (sbKey.charAt(i) == '_') {
+                                        sbKey.setCharAt(i, this.separator);
+                                    }
+                                }
+                            }
+                            jsonCopy.put(sbKey.toString(), addMapElement.getValue());
                         } else {
                             jsonCopy.put(addMapElement.getKey(), addMapElement.getValue());
                         }
@@ -233,24 +262,41 @@ class JsonMap {
                 }
 
                 if (!fromAddMap) {
-                    CharSequence cs = String.valueOf(this.separator);
-                    if (!copyJsonCopyElement.getKey().contains(cs)) {
-                        jsonCopy.put(copyJsonCopyElement.getKey().replaceAll("_", String.valueOf(this.separator)), copyJsonCopyElement.getValue());
-                    } else {
-                        jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
-                    }
+                    jsonCopy.put(copyJsonCopyElement.getKey(), copyJsonCopyElement.getValue());
                 }
             }
 
             depth--;
         } while (depth > 0);
 
+        Map<String, JsonElement> result = new LinkedHashMap<>();
+
+        for (Map.Entry<String, JsonElement> i : jsonCopy.entrySet()) {
+
+            StringBuilder sbKey = new StringBuilder(i.getKey());
+            if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
+                for (Integer j : this.replacedSeparatorChars.get(sbKey.toString())) {
+                    if (sbKey.charAt(j) == '_') {
+                        sbKey.setCharAt(j, this.separator);
+                    }
+                }
+
+                result.put(sbKey.toString(), i.getValue());
+            } else {
+                result.put(i.getKey(), i.getValue());
+            }
+        }
+
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-        return gson.toJsonTree(jsonCopy);
+        return gson.toJsonTree(result);
     }
 
     public Map<String, JsonElement> getJsonMap() {
         return this.jsonMap;
+    }
+
+    public Map<String, List<Integer>> getReplacedSeparatorChars() {
+        return  this.replacedSeparatorChars;
     }
 
     public void changePropertyValue(String key, JsonElement value) {                            //Зарезервировано для версии с GUI
@@ -292,8 +338,12 @@ class Merger {
     protected void merge() {
 
         Map<String, JsonElement> mergedMap = new LinkedHashMap<>();
+        Map<String, List<Integer>> mergedReplacedSeparatorChars = new HashMap<>();
         boolean userRootArrayFounded = false;
         boolean distrRootArrayFounded = false;
+
+        mergedReplacedSeparatorChars.putAll(this.userSettings.getReplacedSeparatorChars());
+        mergedReplacedSeparatorChars.putAll(this.defaultSettings.getReplacedSeparatorChars());
 
         if (this.defaultSettings.getJsonMap().size() == 0) {           //Если defaultSettings пуст, то цикл не откроется
             mergedMap.putAll(this.userSettings.getJsonMap());
@@ -352,7 +402,8 @@ class Merger {
             }
         }
 
-        this.merged = new JsonMap(mergedMap);
+        this.merged = new JsonMap(mergedMap, mergedReplacedSeparatorChars);
+        this.merged.printJsonMap();
     }
 
 
@@ -570,6 +621,7 @@ public class Parser {
             System.out.println("Merging file pair: " + pair.name);
             Merger pairMerger = new Merger(pair.userSettings, pair.distrSettings);
             pair.userSettings = new JsonMap(pairMerger.getMerged());
+            System.out.println(pair.userSettings.getReplacedSeparatorChars());
             parsedFilesIterator.remove();
             parsedFilesIterator.add(pair);
 
