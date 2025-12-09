@@ -8,7 +8,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 class JsonMap {
-    private final char separator = ' ';
+    public final char separator = ' ';
 
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
@@ -137,8 +137,6 @@ class JsonMap {
                 }
             }
         }
-
-        System.out.println(replacedSeparatorChars);
     }
 
     public JsonElement toJson() {
@@ -375,9 +373,14 @@ class Merger {
                         break;
                     }
 
+                    if (!distrRootArrayFounded && ((userElem.getKey().startsWith(defaultElem.getKey())
+                            && (userElem.getKey().length() == defaultElem.getKey().length() || userElem.getKey().charAt(defaultElem.getKey().length()) == this.userSettings.separator)
+                        )
+                            || (defaultElem.getKey().startsWith(userElem.getKey())
+                                && (defaultElem.getKey().length() == userElem.getKey().length() || defaultElem.getKey().charAt(userElem.getKey().length()) == this.userSettings.separator)
+                        )
 
-                    if (!distrRootArrayFounded && (userElem.getKey().startsWith(defaultElem.getKey())
-                            || defaultElem.getKey().startsWith(userElem.getKey()))) {   //Взятие значения из пользовательских файлов если оно задано (
+                    )) {   //Взятие значения из пользовательских файлов если оно задано (
 
                         foundedInUserElements = true;
                         mergedMap.put(userElem.getKey(), userElem.getValue());
@@ -403,7 +406,6 @@ class Merger {
         }
 
         this.merged = new JsonMap(mergedMap, mergedReplacedSeparatorChars);
-        this.merged.printJsonMap();
     }
 
 
@@ -621,7 +623,6 @@ public class Parser {
             System.out.println("Merging file pair: " + pair.name);
             Merger pairMerger = new Merger(pair.userSettings, pair.distrSettings);
             pair.userSettings = new JsonMap(pairMerger.getMerged());
-            System.out.println(pair.userSettings.getReplacedSeparatorChars());
             parsedFilesIterator.remove();
             parsedFilesIterator.add(pair);
 
