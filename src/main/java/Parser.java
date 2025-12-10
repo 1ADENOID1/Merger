@@ -8,7 +8,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 class JsonMap {
-    public final char separator = ' ';
+    private final char separator = ' ';
+
+    private final char separatorReplacer = '_';
 
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
@@ -44,27 +46,21 @@ class JsonMap {
     }
 
     private void fromJsonElement(JsonElement elem) {
-        //this.jsonMap.putAll(elem.getAsJsonObject().asMap());
+
         if (elem.isJsonObject()) {
             for (Map.Entry<String, JsonElement> i : elem.getAsJsonObject().asMap().entrySet()) {
 
                 List<Integer> replacedSeparators = new ArrayList<>(getReplacedSeparatorsIndex(i.getKey()));
-                this.jsonMap.put(i.getKey().replaceAll(String.valueOf(separator), "_"), i.getValue());
+                this.jsonMap.put(i.getKey().replaceAll(String.valueOf(separator), String.valueOf(separatorReplacer)), i.getValue());
 
                 if (!replacedSeparators.isEmpty()) {
-                    replacedSeparatorChars.put(i.getKey().replaceAll(String.valueOf(separator), "_"), replacedSeparators);
+                    replacedSeparatorChars.put(i.getKey().replaceAll(String.valueOf(separator), String.valueOf(separatorReplacer)), replacedSeparators);
                 }
 
             }
         } else if (elem.isJsonArray()) {
             this.jsonMap.put(null, elem.getAsJsonArray());
         }
-
-        /*for (Map.Entry<String, JsonElement> i : this.jsonMap.entrySet()) {
-            if (i.getKey().contains(cs)) {
-                throw new JsonParseException("Empty character was found in json field: " + i.getKey() + ": " + i.getValue());
-            }
-        }*/
 
         expandJsonObjects();
     }
@@ -73,9 +69,6 @@ class JsonMap {
         FileReader inputFileReader = new FileReader(inputFile);
 
         JsonElement inputJsonElement = JsonParser.parseReader(inputFileReader);
-        /*if (inputJsonElement.getAsJsonObject().isEmpty()) {
-            throw new JsonParseException("Input file is empty");
-        }*/
 
         fromJsonElement(inputJsonElement);
     }
@@ -97,10 +90,10 @@ class JsonMap {
 
                         List<Integer> replacedSeparators = new ArrayList<>(getReplacedSeparatorsIndex(j.getKey()));
 
-                        addMap.put(i.getKey() + this.separator + j.getKey().replaceAll(String.valueOf(separator), "_"), j.getValue());
+                        addMap.put(i.getKey() + this.separator + j.getKey().replaceAll(String.valueOf(separator), String.valueOf(separatorReplacer)), j.getValue());
 
                         if (!replacedSeparators.isEmpty()) {
-                            replacedSeparatorChars.put(j.getKey().replaceAll(String.valueOf(separator), "_"), replacedSeparators);
+                            replacedSeparatorChars.put(j.getKey().replaceAll(String.valueOf(separator), String.valueOf(separatorReplacer)), replacedSeparators);
                         }
                     }
                 }
@@ -190,7 +183,7 @@ class JsonMap {
                         StringBuilder sbKey = new StringBuilder(objectName);
                         if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
                             for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
-                                if (sbKey.charAt(i) == '_') {
+                                if (sbKey.charAt(i) == this.separatorReplacer) {
                                     sbKey.setCharAt(i, this.separator);
                                 }
                             }
@@ -207,7 +200,7 @@ class JsonMap {
                             StringBuilder sbKey = new StringBuilder(objectName);
                             if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
                                 for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
-                                    if (sbKey.charAt(i) == '_') {
+                                    if (sbKey.charAt(i) == this.separatorReplacer) {
                                         sbKey.setCharAt(i, this.separator);
                                     }
                                 }
@@ -247,7 +240,7 @@ class JsonMap {
                             StringBuilder sbKey = new StringBuilder(addMapElement.getKey());
                             if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
                                 for (Integer i : this.replacedSeparatorChars.get(sbKey.toString())) {
-                                    if (sbKey.charAt(i) == '_') {
+                                    if (sbKey.charAt(i) == this.separatorReplacer) {
                                         sbKey.setCharAt(i, this.separator);
                                     }
                                 }
@@ -274,7 +267,7 @@ class JsonMap {
             StringBuilder sbKey = new StringBuilder(i.getKey());
             if (this.replacedSeparatorChars.containsKey(sbKey.toString())) {
                 for (Integer j : this.replacedSeparatorChars.get(sbKey.toString())) {
-                    if (sbKey.charAt(j) == '_') {
+                    if (sbKey.charAt(j) == this.separatorReplacer) {
                         sbKey.setCharAt(j, this.separator);
                     }
                 }
@@ -287,6 +280,10 @@ class JsonMap {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         return gson.toJsonTree(result);
+    }
+
+    public char getSeparator() {
+        return this.separator;
     }
 
     public Map<String, JsonElement> getJsonMap() {
@@ -365,19 +362,17 @@ class Merger {
                             throw new JsonParseException("Json root is array, but json map length is not 1");
                         }
 
-                        //if (distrRootArrayFounded) {
                         mergedMap.put(null, userElem.getValue());
-                        //}
 
                         userRootArrayFounded = true;
                         break;
                     }
 
                     if (!distrRootArrayFounded && ((userElem.getKey().startsWith(defaultElem.getKey())
-                            && (userElem.getKey().length() == defaultElem.getKey().length() || userElem.getKey().charAt(defaultElem.getKey().length()) == this.userSettings.separator)
+                            && (userElem.getKey().length() == defaultElem.getKey().length() || userElem.getKey().charAt(defaultElem.getKey().length()) == this.userSettings.getSeparator())
                         )
                             || (defaultElem.getKey().startsWith(userElem.getKey())
-                                && (defaultElem.getKey().length() == userElem.getKey().length() || defaultElem.getKey().charAt(userElem.getKey().length()) == this.userSettings.separator)
+                                && (defaultElem.getKey().length() == userElem.getKey().length() || defaultElem.getKey().charAt(userElem.getKey().length()) == this.userSettings.getSeparator())
                         )
 
                     )) {   //Взятие значения из пользовательских файлов если оно задано (
