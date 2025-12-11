@@ -479,7 +479,7 @@ public class Parser {
                 case 2: output="User directory is not defined"; break;
                 case 3: output="Backup directory is not defined"; break;
                 case 4: output="Parameter \"Create new directory for backup\" is not defined"; break;
-                default: output="";
+                default: output="Invalid arguments";
             }
             System.out.println(output);
             System.exit(1);
