@@ -564,7 +564,7 @@ public class Parser {
         }
         System.out.println("User files copied successfully");
 
-        List<FilePair> parsedFiles = new ArrayList<>();
+        List<FilePair> parsedFilePairs = new ArrayList<>();
 
         System.out.println("Parsing the distributive and user files");
         try {
@@ -588,7 +588,7 @@ public class Parser {
 
                         System.out.println("Parsing user file: " + userFile.getAbsolutePath());
                         userFileJsonMap = new JsonMap(userFile);
-                        parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
+                        parsedFilePairs.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                         System.out.println("Parsed file pair: " + distrRelativeFilePath + " " + userRelativeFilePath);
 
                         break;
@@ -598,7 +598,7 @@ public class Parser {
                 if (!pairFounded && distrFile.isFile()) {
                     System.out.println("Parsed distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
                     userFileJsonMap = new JsonMap(distrFileJsonMap);
-                    parsedFiles.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
+                    parsedFilePairs.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                 }
             }
         } catch (IOException | JsonParseException ex) {
@@ -612,15 +612,12 @@ public class Parser {
 
         System.out.println("Merging the files");
 
-        ListIterator<FilePair> parsedFilesIterator = parsedFiles.listIterator();
-        while (parsedFilesIterator.hasNext()) {
-            FilePair pair = parsedFilesIterator.next();
-            System.out.println("Merging file pair: " + pair.name);
-            Merger pairMerger = new Merger(pair.userSettings, pair.distrSettings);
-            pair.userSettings = new JsonMap(pairMerger.getMerged());
-            parsedFilesIterator.remove();
-            parsedFilesIterator.add(pair);
+        Map<String, JsonMap> mergeResults = new LinkedHashMap<>();
 
+        for (FilePair pair : parsedFilePairs) {
+            System.out.println("Merging file pair: " + pair.name);
+            Merger filePairMerger = new Merger(pair.userSettings, pair.distrSettings);
+            mergeResults.put(pair.name, new JsonMap(filePairMerger.getMerged()));
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -629,12 +626,12 @@ public class Parser {
         System.out.println("Writing the changes to user files");
 
         try {
-            for (FilePair i : parsedFiles) {
-                System.out.println("Writing " + i.name);
-                File file = new File(userDir + File.separator + i.name);
+            for (Map.Entry<String, JsonMap> resultJsonMapWithFileName : mergeResults.entrySet()) {
+                System.out.println("Writing " + resultJsonMapWithFileName.getKey());
+                File file = new File(userDir + File.separator + resultJsonMapWithFileName.getKey());
                 file.getParentFile().mkdirs();
                 FileWriter fw = new FileWriter(file);
-                fw.write(gson.toJson(i.userSettings.toJson()));
+                fw.write(gson.toJson(resultJsonMapWithFileName.getValue().toJson()));
                 fw.close();
             }
         } catch (IOException exc) {
