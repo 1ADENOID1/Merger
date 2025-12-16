@@ -8,9 +8,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 class JsonMap {
-    private final char separator = ' ';
+    private final char separator = '█';
 
-    private final char separatorReplacer = '_';
+    private final char separatorReplacer = '▀';
 
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
