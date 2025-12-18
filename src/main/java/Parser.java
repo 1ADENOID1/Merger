@@ -10,7 +10,7 @@ import java.util.*;
 class JsonMap {
     private final char separator = '█';
 
-    private final String validationRegexp = "[a-zA-Zа-яА-Я0-9_ ]*";
+    private final String validationRegexp = "[a-zA-Zа-яА-Я0-9_ !@#№$%^&?*(){}\\[\\]/\\\\|+=-~`,.:;'\"<>]+";
 
     private Map<String, JsonElement> jsonMap = new LinkedHashMap<>();
 
