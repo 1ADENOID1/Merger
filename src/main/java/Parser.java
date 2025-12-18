@@ -566,7 +566,7 @@ public class Parser {
                 fw.write(gson.toJson(resultJsonMapWithFileName.getValue().toJson()));
                 fw.close();
             }
-        } catch (IOException exc) {
+        } catch (IOException | JsonIOException exc) {
             System.err.println("Failed to write file. Stacktrace:");
             exc.printStackTrace();
             System.exit(1);
