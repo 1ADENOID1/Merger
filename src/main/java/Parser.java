@@ -256,6 +256,8 @@ class Merger {
 
     private JsonMap merged;
 
+    private List<String> changes = new ArrayList<>();
+
 
     public Merger(JsonMap userSettings, JsonMap defaultSettings) {
         this.userSettings = userSettings;
@@ -274,6 +276,7 @@ class Merger {
 
         if (this.defaultSettings.getJsonMap().size() == 0) {           //Если defaultSettings пуст, то цикл не откроется
             mergedMap.putAll(this.userSettings.getJsonMap());
+            this.changes.add("Default settings is empty. Saved all user settings");
         }
         else {
             for (Map.Entry<String, JsonElement> defaultElem : this.defaultSettings.getJsonMap().entrySet()) {
@@ -296,6 +299,13 @@ class Merger {
 
                         mergedMap.put(null, userElem.getValue());
 
+                        if (distrRootArrayFounded && !userElem.getValue().equals(defaultElem.getValue())) {
+                            this.changes.add("Value of root array in default and user file is different. Saved user value: " + userElem.getValue());
+                        }
+                        else if (!distrRootArrayFounded) {
+                            this.changes.add("Root array in default file is object and root array in user file is array. Saved user value: " + userElem.getValue());
+                        }
+
                         userRootArrayFounded = true;
                         break;
                     }
@@ -312,13 +322,12 @@ class Merger {
                         foundedInUserElements = true;
                         mergedMap.put(userElem.getKey(), userElem.getValue());
 
-                    }
-
-                    for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
-                        if (distrRootArrayFounded || !userElem.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElem.getKey())) {
-                            mergedMap.put(userElem.getKey(), userElem.getValue());
+                        if (!userElem.getValue().equals(defaultElem.getValue())) {
+                            this.changes.add("Default value overwritten by user value. Key: \"" + userElem.getKey() + "\" Saved value: " + userElem.getValue());
                         }
                     }
+
+
                 }
 
                 if (userRootArrayFounded || distrRootArrayFounded) {
@@ -328,6 +337,15 @@ class Merger {
 
                 if (!foundedInUserElements) {                                               //Добавление новых полей из дистрибутива
                     mergedMap.put(defaultElem.getKey(), defaultElem.getValue());
+                    this.changes.add("Default key: \"" + defaultElem.getKey() + "\" is not found in user file. Saved default value: " + defaultElem.getValue());
+                }
+            }
+        }
+        for (Map.Entry<String, JsonElement> userElemNew : this.userSettings.getJsonMap().entrySet()) {
+            for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
+                if (distrRootArrayFounded || !userElemNew.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElemNew.getKey())) {
+                    mergedMap.put(userElemNew.getKey(), userElemNew.getValue());
+                    this.changes.add("User key: \"" + userElemNew.getKey() + "\" is not found in default file. Saved user value: " + userElemNew.getValue());
                 }
             }
         }
@@ -338,6 +356,10 @@ class Merger {
 
     public JsonMap getMerged() {
         return this.merged;
+    }
+
+    public List<String> getChanges() {
+        return this.changes;
     }
 }
 
@@ -404,13 +426,14 @@ public class Parser {
 
     public static void main(String[] arg) throws IOException {
 
-        if (arg.length < 5) {
+        if (arg.length < 6) {
             String output;
             switch (arg.length) {
                 case 1: output="Default directory is not defined"; break;
                 case 2: output="User directory is not defined"; break;
                 case 3: output="Backup directory is not defined"; break;
                 case 4: output="Parameter \"Create new directory for backup\" is not defined"; break;
+                case 5: output="Parameter \"Create ChangeLog file\" is not defined"; break;
                 default: output="Invalid arguments";
             }
             System.out.println(output);
@@ -428,11 +451,12 @@ public class Parser {
         boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
 
         String fileEncoding;
-        if (arg.length < 6 || arg[5] == null) {
+        if (arg.length < 7 || arg[6] == null) {
             fileEncoding = "UTF-8";
         } else {
-            fileEncoding = arg[5];
+            fileEncoding = arg[6];
         }
+        boolean logTheChanges = Boolean.parseBoolean(arg[5]);
         System.out.println("Setup file encoding: " + fileEncoding);
         System.setProperty("file.encoding", fileEncoding);
 
@@ -440,6 +464,7 @@ public class Parser {
         System.out.println("User directory: " + userDir);
         System.out.println("Backup directory: " + backupUserFiles);
         System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to backup directory root"));
+        System.out.println("Writing file changelog: " + (logTheChanges ? "YES" : "NO"));
 
         File distr = new File(distrDir);
         File user = new File(userDir);
@@ -546,9 +571,12 @@ public class Parser {
 
         Map<String, JsonMap> mergeResults = new LinkedHashMap<>();
 
+        Map<String, List<String>> fileChanges = new LinkedHashMap<>();
+
         for (FilePair pair : parsedFilePairs) {
             System.out.println("Merging file pair: " + pair.name);
             Merger filePairMerger = new Merger(pair.userSettings, pair.distrSettings);
+            fileChanges.put(pair.name, filePairMerger.getChanges());
             mergeResults.put(pair.name, new JsonMap(filePairMerger.getMerged()));
         }
 
@@ -572,6 +600,31 @@ public class Parser {
             System.exit(1);
         }
 
-        System.out.println("Changes written successfully");
+        System.out.println("Files written successfully");
+
+        if (logTheChanges) {
+            System.out.println("Saving changelog");
+            File changelogFile = new File("changelog.txt");
+            try (FileWriter fw = new FileWriter(changelogFile)) {
+
+                for (Map.Entry<String, List<String>> i : fileChanges.entrySet()) {
+
+                    fw.write("File: " + i.getKey() + "\n");
+
+                    for (String change : i.getValue()) {
+                        fw.write(change + "\n");
+                    }
+
+                    fw.flush();
+                }
+
+                fw.close();
+                System.out.println("Changelog saved");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
     }
 }
