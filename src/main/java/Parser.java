@@ -303,11 +303,14 @@ class Merger {
                             this.changes.add("Value of root array in default and user file is different. Saved user value: " + userElem.getValue());
                         }
                         else if (!distrRootArrayFounded) {
-                            this.changes.add("Root array in default file is object and root array in user file is array. Saved user value: " + userElem.getValue());
+                            this.changes.add("Root element in default file is object and root element in user file is array. Saved user value: " + userElem.getValue());
                         }
 
                         userRootArrayFounded = true;
                         break;
+                    }
+                    if (defaultElem.getKey() == null) {
+                        this.changes.add("Root element in default file is array and root element in user file is object. Saved user value: " + userElem.getValue());
                     }
 
                     if (!distrRootArrayFounded && ((userElem.getKey().startsWith(defaultElem.getKey())
@@ -340,15 +343,19 @@ class Merger {
                     this.changes.add("Default key: \"" + defaultElem.getKey() + "\" is not found in user file. Saved default value: " + defaultElem.getValue());
                 }
             }
-        }
-        for (Map.Entry<String, JsonElement> userElemNew : this.userSettings.getJsonMap().entrySet()) {
-            for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
-                if (distrRootArrayFounded || !userElemNew.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElemNew.getKey())) {
-                    mergedMap.put(userElemNew.getKey(), userElemNew.getValue());
-                    this.changes.add("User key: \"" + userElemNew.getKey() + "\" is not found in default file. Saved user value: " + userElemNew.getValue());
+
+            for (Map.Entry<String, JsonElement> userElemNew : this.userSettings.getJsonMap().entrySet()) {
+                for (Map.Entry<String, JsonElement> defaultElemNew : this.defaultSettings.getJsonMap().entrySet()) {               //Сохранение полей, отсутствующих в дистрибутиве
+                    if (!userRootArrayFounded &&
+                            (distrRootArrayFounded || !userElemNew.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElemNew.getKey()))
+                    ) {
+                        mergedMap.put(userElemNew.getKey(), userElemNew.getValue());
+                        this.changes.add("User key: \"" + userElemNew.getKey() + "\" is not found in default file. Saved user value: " + userElemNew.getValue());
+                    }
                 }
             }
         }
+
 
         this.merged = new JsonMap(mergedMap);
     }
@@ -609,10 +616,14 @@ public class Parser {
 
                 for (Map.Entry<String, List<String>> i : fileChanges.entrySet()) {
 
-                    fw.write("File: " + i.getKey() + "\n");
+                    fw.write("\nFile: " + i.getKey() + "\n");
 
-                    for (String change : i.getValue()) {
-                        fw.write(change + "\n");
+                    if (!i.getValue().isEmpty()) {
+                        for (String change : i.getValue()) {
+                            fw.write(change + "\n");
+                        }
+                    } else {
+                        fw.write("No changes in this file\n");
                     }
 
                     fw.flush();
