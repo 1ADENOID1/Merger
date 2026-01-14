@@ -20,10 +20,22 @@
     - false - не создавать поддиректорию, бекап будет выполнен в BACKUP_DIR. **Внимание:** для режимма false обязательно, чтобы BACKUP_DIR была пустой 
 5. CREATE_CHANGELOG - записывать лог изменений. Изменения логгируются в автоматически генерируемый файл changelog.txt в корне проекта
     - true - записывать лог изменений
-    - false - не записывать лог изменений  
-	> [!WARNING]   
+    - false - не записывать лог изменений
 	> Разработка данной функции ещё не завершена, возможна некорректная работа	
 6. FILE_ENCODING - Кодировка файлов. По умолчанию UTF-8 (является стандартом для json)
+
+### Пример настроек start.bat
+```
+set DISTR_DIR=C:\\Users\\azaytsev\\Desktop\\resources
+set USER_DIR=C:\\Users\\azaytsev\\Desktop\\resources1
+set BACKUP_DIR=C:\\Users\\azaytsev\\Desktop\\userBackup
+set CREATE_BACKUP_SUBDIR=true
+set CREATE_CHANGELOG=true
+set FILE_ENCODING=UTF-8
+
+java -jar target/JSONpars-1.0-SNAPSHOT-jar-with-dependencies.jar Parser %DISTR_DIR% %USER_DIR% %BACKUP_DIR% %CREATE_BACKUP_SUBDIR% %CREATE_CHANGELOG% %FILE_ENCODING%
+pause
+```
 
 ## Правила слияния файлов
 1. Если в дистрибутиве появилось новое поле - оно добавляется в клиентский файл со значением из дистрибутива
