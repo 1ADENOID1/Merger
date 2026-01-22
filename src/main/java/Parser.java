@@ -61,14 +61,14 @@ public class Parser {
         if (arg.length < 6) {
             String output;
             switch (arg.length) {
-                case 1: output="Default directory is not defined"; break;
-                case 2: output="User directory is not defined"; break;
-                case 3: output="Backup directory is not defined"; break;
-                case 4: output="Parameter \"Create new directory for backup\" is not defined"; break;
-                case 5: output="Parameter \"Create ChangeLog file\" is not defined"; break;
-                default: output="Invalid arguments";
+                case 1: output="Parameter \"UPDATED_RES_DIR\" is not defined"; break;
+                case 2: output="Parameter \"CURRENT_RES_DIR\" is not defined"; break;
+                case 3: output="Parameter \"BACKUP_DIR\" is not defined"; break;
+                case 4: output="Parameter \"CREATE_BACKUP_SUBDIR\" is not defined"; break;
+                case 5: output="Parameter \"CREATE_CHANGELOG\" is not defined"; break;
+                default: output="Count of parameters is less that needed";
             }
-            System.out.println(output);
+            System.err.println("Error: " + output);
             System.exit(1);
         }
 
@@ -77,7 +77,7 @@ public class Parser {
         String backupUserFiles = arg[3];
 
         if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
-            System.err.println("Parameter \"Create new directory for backup\" must be true or false");
+            System.err.println("Error: Parameter \"CREATE_BACKUP_SUBDIR\" must be true or false");
             System.exit(1);
         }
         boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
@@ -95,7 +95,7 @@ public class Parser {
         System.out.println("Distributive directory: " + distrDir);
         System.out.println("User directory: " + userDir);
         System.out.println("Backup directory: " + backupUserFiles);
-        System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to backup directory root"));
+        System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to directory root"));
         System.out.println("Writing file changelog: " + (logTheChanges ? "YES" : "NO"));
 
         File distr = new File(distrDir);
@@ -103,11 +103,11 @@ public class Parser {
         File destFile = new File(backupUserFiles);
 
         if (!destFile.isDirectory()) {
-           System.err.println("Backup path is not found or is not a directory");
+           System.err.println("Error: Backup path is not found or is not a directory");
            System.exit(1);
         }
         if (!createNewDirToBackup && destFile.list().length != 0) {
-            System.err.println("Backup directory must be empty");
+            System.err.println("Error: Backup directory must be empty");
             System.exit(1);
         }
         else if (createNewDirToBackup) {
@@ -124,11 +124,11 @@ public class Parser {
         }
 
         if (!distr.isDirectory()) {
-            System.err.println("Distributive path is not found or is not a directory");
+            System.err.println("Error: Distributive path is not found or is not a directory");
             System.exit(1);
         }
         if (!user.isDirectory()) {
-            System.err.println("User path is not found or is not a directory");
+            System.err.println("Error: User path is not found or is not a directory");
             System.exit(1);
         }
 
@@ -147,7 +147,7 @@ public class Parser {
                 Files.copy(i.toPath(), destDir.resolve(getRelativePath(userDir, i.getAbsolutePath())), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException exc) {
-            System.err.println("Failed to backup user files. Stacktrace:");
+            System.err.println("Error: Failed to backup user files. Stacktrace:");
             exc.printStackTrace();
             System.exit(1);
         }
@@ -191,7 +191,7 @@ public class Parser {
                 }
             }
         } catch (IOException | JsonParseException ex) {
-            System.err.println("Failed to parse file. Stacktrace:");
+            System.err.println("Error: Failed to parse file. Stacktrace:");
             ex.printStackTrace();
             System.exit(1);
 
@@ -227,7 +227,7 @@ public class Parser {
                 fw.close();
             }
         } catch (IOException | JsonIOException exc) {
-            System.err.println("Failed to write file. Stacktrace:");
+            System.err.println("Error: Failed to write file. Stacktrace:");
             exc.printStackTrace();
             System.exit(1);
         }
@@ -241,16 +241,13 @@ public class Parser {
 
                 for (Map.Entry<String, List<String>> i : fileChanges.entrySet()) {
 
-                    fw.write("\nFile: " + i.getKey() + "\n");
-
                     if (!i.getValue().isEmpty()) {
+                        fw.write("\nFile: " + i.getKey() + "\n");
+
                         for (String change : i.getValue()) {
                             fw.write(change + "\n");
                         }
-                    } else {
-                        fw.write("No changes in this file\n");
                     }
-
                     fw.flush();
                 }
 
@@ -259,8 +256,6 @@ public class Parser {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
     }
 }
