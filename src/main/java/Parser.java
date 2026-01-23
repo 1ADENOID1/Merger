@@ -58,6 +58,8 @@ public class Parser {
 
     public static void main(String[] arg) throws IOException {
 
+        System.out.println("Checking the command line parameters...");
+
         if (arg.length < 6) {
             String output;
             switch (arg.length) {
@@ -138,6 +140,7 @@ public class Parser {
             System.exit(1);
         }
 
+        System.out.println("Checking the command line parameters is finished");
 
         List<File> distrExpandedFileList = filesToList(distrFileObjDir);
         List<File> userExpandedFileList = filesToList(userFileObjDir);
