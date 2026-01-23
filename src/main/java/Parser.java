@@ -66,7 +66,7 @@ public class Parser {
                 case 3: output="Parameter \"BACKUP_DIR\" is not defined"; break;
                 case 4: output="Parameter \"CREATE_BACKUP_SUBDIR\" is not defined"; break;
                 case 5: output="Parameter \"CREATE_CHANGELOG\" is not defined"; break;
-                default: output="Count of parameters is less that needed";
+                default: output="Count of received command line parameters is less that needed";
             }
             System.err.println("Error: " + output);
             System.exit(1);
@@ -74,7 +74,7 @@ public class Parser {
 
         String distrDir = arg[1];
         String userDir = arg[2];
-        String backupUserFiles = arg[3];
+        String backupUserFilesDir = arg[3];
 
         if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
             System.err.println("Error: Parameter \"CREATE_BACKUP_SUBDIR\" must be true or false");
@@ -88,58 +88,64 @@ public class Parser {
         } else {
             fileEncoding = arg[6];
         }
+
+        if (!arg[5].equalsIgnoreCase("true") && !arg[5].equalsIgnoreCase("false")) {
+            System.err.println("Error: Parameter \"CREATE_CHANGELOG\" must be true or false");
+            System.exit(1);
+        }
         boolean logTheChanges = Boolean.parseBoolean(arg[5]);
+
         System.out.println("Setup file encoding: " + fileEncoding);
         System.setProperty("file.encoding", fileEncoding);
 
         System.out.println("Distributive directory: " + distrDir);
         System.out.println("User directory: " + userDir);
-        System.out.println("Backup directory: " + backupUserFiles);
+        System.out.println("Backup directory: " + backupUserFilesDir);
         System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to directory root"));
         System.out.println("Writing file changelog: " + (logTheChanges ? "YES" : "NO"));
 
-        File distr = new File(distrDir);
-        File user = new File(userDir);
-        File destFile = new File(backupUserFiles);
+        File distrFileObjDir = new File(distrDir);
+        File userFileObjDir = new File(userDir);
+        File backupUserFileObjDir = new File(backupUserFilesDir);
 
-        if (!destFile.isDirectory()) {
+        if (!backupUserFileObjDir.isDirectory()) {
            System.err.println("Error: Backup path is not found or is not a directory");
            System.exit(1);
         }
-        if (!createNewDirToBackup && destFile.list().length != 0) {
+        if (!createNewDirToBackup && backupUserFileObjDir.list().length != 0) {
             System.err.println("Error: Backup directory must be empty");
             System.exit(1);
         }
         else if (createNewDirToBackup) {
 
-            String folderName = "Backup";
-            destFile = new File(backupUserFiles += (File.separator + folderName));
+            String backupFolderName = "Backup";
+            backupUserFileObjDir = new File(backupUserFilesDir += (File.separator + backupFolderName));
             int i = 0;
-            while (Files.exists(destFile.toPath())) {
+            while (Files.exists(backupUserFileObjDir.toPath())) {
                 i++;
-                destFile = new File(backupUserFiles + i);
+                backupUserFileObjDir = new File(backupUserFilesDir + i);
             }
 
-            Files.createDirectories(destFile.toPath());
+            Files.createDirectories(backupUserFileObjDir.toPath());
         }
 
-        if (!distr.isDirectory()) {
+        if (!distrFileObjDir.isDirectory()) {
             System.err.println("Error: Distributive path is not found or is not a directory");
             System.exit(1);
         }
-        if (!user.isDirectory()) {
+        if (!userFileObjDir.isDirectory()) {
             System.err.println("Error: User path is not found or is not a directory");
             System.exit(1);
         }
 
 
-        List<File> distrExpandedFileList = filesToList(distr);
-        List<File> userExpandedFileList = filesToList(user);
+        List<File> distrExpandedFileList = filesToList(distrFileObjDir);
+        List<File> userExpandedFileList = filesToList(userFileObjDir);
 
-        Path destDir = destFile.toPath();
+        Path destDir = backupUserFileObjDir.toPath();
 
-        List<File> filesToBackup = filesToList(user, false);
-        System.out.println("Copying the user files to backup directory");
+        List<File> filesToBackup = filesToList(userFileObjDir, false);
+        System.out.println("\nSTAGE 1: Copying the user files to backup directory");
         try {
             for (File i : filesToBackup) {
 
@@ -151,11 +157,11 @@ public class Parser {
             exc.printStackTrace();
             System.exit(1);
         }
-        System.out.println("User files copied successfully");
+        System.out.println("STAGE 1 FINISHED: User files copied successfully\n");
 
-        List<FilePair> parsedFilePairs = new ArrayList<>();
+        List<FilePair> parsedFilePairList = new ArrayList<>();
 
-        System.out.println("Parsing the distributive and user files");
+        System.out.println("STAGE 2: Parsing the distributive and user files");
         try {
             for (File distrFile : distrExpandedFileList) {
 
@@ -177,7 +183,7 @@ public class Parser {
 
                         System.out.println("Parsing user file: " + userFile.getAbsolutePath());
                         userFileJsonMap = new JsonMap(userFile);
-                        parsedFilePairs.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
+                        parsedFilePairList.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                         System.out.println("Parsed file pair: " + distrRelativeFilePath + " " + userRelativeFilePath);
 
                         break;
@@ -187,7 +193,7 @@ public class Parser {
                 if (!pairFounded && distrFile.isFile()) {
                     System.out.println("Parsed distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
                     userFileJsonMap = new JsonMap(distrFileJsonMap);
-                    parsedFilePairs.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
+                    parsedFilePairList.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                 }
             }
         } catch (IOException | JsonParseException ex) {
@@ -197,28 +203,28 @@ public class Parser {
 
         }
 
-        System.out.println("Files parsed successfully");
+        System.out.println("STAGE 2 FINISHED: Files parsed successfully\n");
 
-        System.out.println("Merging the files");
+        System.out.println("STAGE 3: Merging the files");
 
-        Map<String, JsonMap> mergeResults = new LinkedHashMap<>();
+        Map<String, JsonMap> mergeResultsMap = new LinkedHashMap<>();
 
-        Map<String, List<String>> fileChanges = new LinkedHashMap<>();
+        Map<String, List<String>> fileChangesMap = new LinkedHashMap<>();
 
-        for (FilePair pair : parsedFilePairs) {
+        for (FilePair pair : parsedFilePairList) {
             System.out.println("Merging file pair: " + pair.name);
             Merger filePairMerger = new Merger(pair.userSettings, pair.distrSettings);
-            fileChanges.put(pair.name, filePairMerger.getChanges());
-            mergeResults.put(pair.name, new JsonMap(filePairMerger.getMerged()));
+            fileChangesMap.put(pair.name, filePairMerger.getChanges());
+            mergeResultsMap.put(pair.name, new JsonMap(filePairMerger.getMerged()));
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-        System.out.println("Files merged successfully");
-        System.out.println("Writing the changes to user files");
+        System.out.println("STAGE 3 FINISHED: Files merged successfully\n");
+        System.out.println("STAGE 4: Writing the changes to user files");
 
         try {
-            for (Map.Entry<String, JsonMap> resultJsonMapWithFileName : mergeResults.entrySet()) {
+            for (Map.Entry<String, JsonMap> resultJsonMapWithFileName : mergeResultsMap.entrySet()) {
                 System.out.println("Writing " + resultJsonMapWithFileName.getKey());
                 File file = new File(userDir + File.separator + resultJsonMapWithFileName.getKey());
                 file.getParentFile().mkdirs();
@@ -232,14 +238,14 @@ public class Parser {
             System.exit(1);
         }
 
-        System.out.println("Files written successfully");
+        System.out.println("STAGE 4 FINISHED: Files written successfully\n");
 
         if (logTheChanges) {
             System.out.println("Saving changelog");
             File changelogFile = new File("changelog.txt");
             try (FileWriter fw = new FileWriter(changelogFile)) {
 
-                for (Map.Entry<String, List<String>> i : fileChanges.entrySet()) {
+                for (Map.Entry<String, List<String>> i : fileChangesMap.entrySet()) {
 
                     if (!i.getValue().isEmpty()) {
                         fw.write("\nFile: " + i.getKey() + "\n");
