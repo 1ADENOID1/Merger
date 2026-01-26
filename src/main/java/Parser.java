@@ -60,23 +60,23 @@ public class Parser {
 
         System.out.println("Checking the command line parameters...");
 
-        if (arg.length < 6) {
+        if (arg.length < 5) {
             String output;
             switch (arg.length) {
-                case 1: output="Parameter \"UPDATED_RES_DIR\" is not defined"; break;
-                case 2: output="Parameter \"CURRENT_RES_DIR\" is not defined"; break;
-                case 3: output="Parameter \"BACKUP_DIR\" is not defined"; break;
-                case 4: output="Parameter \"CREATE_BACKUP_SUBDIR\" is not defined"; break;
-                case 5: output="Parameter \"CREATE_CHANGELOG\" is not defined"; break;
+                case 0: output="Parameter \"UPDATED_RES_DIR\" is not defined"; break;
+                case 1: output="Parameter \"CURRENT_RES_DIR\" is not defined"; break;
+                case 2: output="Parameter \"BACKUP_DIR\" is not defined"; break;
+                case 3: output="Parameter \"CREATE_BACKUP_SUBDIR\" is not defined"; break;
+                case 4: output="Parameter \"CREATE_CHANGELOG\" is not defined"; break;
                 default: output="Count of received command line parameters is less that needed";
             }
             System.err.println("Error: " + output);
             System.exit(1);
         }
 
-        String distrDir = arg[1];
-        String userDir = arg[2];
-        String backupUserFilesDir = arg[3];
+        String distrDir = arg[0];
+        String userDir = arg[1];
+        String backupUserFilesDir = arg[2];
 
         if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
             System.err.println("Error: Parameter \"CREATE_BACKUP_SUBDIR\" must be true or false");
@@ -85,17 +85,17 @@ public class Parser {
         boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
 
         String fileEncoding;
-        if (arg.length < 7 || arg[6] == null) {
+        if (arg.length < 6 || arg[5] == null) {
             fileEncoding = "UTF-8";
         } else {
-            fileEncoding = arg[6];
+            fileEncoding = arg[5];
         }
 
-        if (!arg[5].equalsIgnoreCase("true") && !arg[5].equalsIgnoreCase("false")) {
+        if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
             System.err.println("Error: Parameter \"CREATE_CHANGELOG\" must be true or false");
             System.exit(1);
         }
-        boolean logTheChanges = Boolean.parseBoolean(arg[5]);
+        boolean logTheChanges = Boolean.parseBoolean(arg[4]);
 
         System.out.println("Setup file encoding (FILE_ENCODING): " + fileEncoding);
         System.setProperty("file.encoding", fileEncoding);
