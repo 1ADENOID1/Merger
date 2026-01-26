@@ -56,7 +56,7 @@ public class Parser {
         return new ArrayList<>(expandedFileList);
     }
 
-    public static void main(String[] arg) throws IOException {
+    public static void main(String[] arg) {
 
         System.out.println("Checking the command line parameters...");
 
@@ -97,47 +97,64 @@ public class Parser {
         }
         boolean logTheChanges = Boolean.parseBoolean(arg[5]);
 
-        System.out.println("Setup file encoding: " + fileEncoding);
+        System.out.println("Setup file encoding (FILE_ENCODING): " + fileEncoding);
         System.setProperty("file.encoding", fileEncoding);
 
-        System.out.println("Distributive directory: " + distrDir);
-        System.out.println("User directory: " + userDir);
-        System.out.println("Backup directory: " + backupUserFilesDir);
-        System.out.println("Backup mode: " + (createNewDirToBackup ? "Create subdirectory for backup" : "Backup to directory root"));
-        System.out.println("Writing file changelog: " + (logTheChanges ? "YES" : "NO"));
+        System.out.println("Distributive directory (UPDATED_RES_DIR): " + distrDir);
+        System.out.println("User directory (CURRENT_RES_DIR): " + userDir);
+        System.out.println("Backup directory (BACKUP_DIR): " + backupUserFilesDir);
+        System.out.println("Backup mode (CREATE_BACKUP_SUBDIR): " + (createNewDirToBackup ? "Create subdirectory for backup (true)" : "Backup to directory root (false)"));
+        System.out.println("Writing file changelog (CREATE_CHANGELOG): " + (logTheChanges ? "YES" : "NO"));
 
         File distrFileObjDir = new File(distrDir);
         File userFileObjDir = new File(userDir);
         File backupUserFileObjDir = new File(backupUserFilesDir);
 
+        if (!distrFileObjDir.isDirectory()) {
+            System.err.println("Error: UPDATED_RES_DIR path is not found or is not a directory");
+            System.exit(1);
+        }
+        if (!userFileObjDir.isDirectory()) {
+            System.err.println("Error: CURRENT_RES_DIR path is not found or is not a directory");
+            System.exit(1);
+        }
         if (!backupUserFileObjDir.isDirectory()) {
-           System.err.println("Error: Backup path is not found or is not a directory");
+           System.err.println("Error: BACKUP_DIR path is not found or is not a directory");
            System.exit(1);
         }
+
+        if (distrFileObjDir.getAbsolutePath().equals(userFileObjDir.getAbsolutePath())) {
+            System.err.println("Error: UPDATED_RES_DIR and CURRENT_RES_DIR have equal path");
+            System.exit(1);
+        }
+        if (distrFileObjDir.getAbsolutePath().equals(backupUserFileObjDir.getAbsolutePath()) ||
+                userFileObjDir.getAbsolutePath().equals(backupUserFileObjDir.getAbsolutePath())) {
+            System.err.println("Error: UPDATED_RES_DIR or CURRENT_RES_DIR have equal path with BACKUP_DIR");
+            System.exit(1);
+        }
+
         if (!createNewDirToBackup && backupUserFileObjDir.list().length != 0) {
-            System.err.println("Error: Backup directory must be empty");
+            System.err.println("Error: BACKUP_DIR must be empty, because CREATE_BACKUP_SUBDIR is false");
             System.exit(1);
         }
         else if (createNewDirToBackup) {
 
-            String backupFolderName = "Backup";
-            backupUserFileObjDir = new File(backupUserFilesDir += (File.separator + backupFolderName));
-            int i = 0;
-            while (Files.exists(backupUserFileObjDir.toPath())) {
-                i++;
-                backupUserFileObjDir = new File(backupUserFilesDir + i);
+            try {
+                String backupFolderName = "Backup";
+                backupUserFileObjDir = new File(backupUserFilesDir += (File.separator + backupFolderName));
+                int i = 0;
+                while (Files.exists(backupUserFileObjDir.toPath())) {
+                    i++;
+                    backupUserFileObjDir = new File(backupUserFilesDir + i);
+                }
+
+                Files.createDirectories(backupUserFileObjDir.toPath());
+
+            } catch(IOException e) {
+                System.err.println("Error: Can`t create backup subdirectory. Stacktrace:");
+                e.printStackTrace();
+                System.exit(1);
             }
-
-            Files.createDirectories(backupUserFileObjDir.toPath());
-        }
-
-        if (!distrFileObjDir.isDirectory()) {
-            System.err.println("Error: Distributive path is not found or is not a directory");
-            System.exit(1);
-        }
-        if (!userFileObjDir.isDirectory()) {
-            System.err.println("Error: User path is not found or is not a directory");
-            System.exit(1);
         }
 
         System.out.println("Checking the command line parameters is finished");
@@ -145,10 +162,12 @@ public class Parser {
         List<File> distrExpandedFileList = filesToList(distrFileObjDir);
         List<File> userExpandedFileList = filesToList(userFileObjDir);
 
+        System.out.println("\nSTAGE 1: Copying the user files to backup directory");
+
         Path destDir = backupUserFileObjDir.toPath();
 
         List<File> filesToBackup = filesToList(userFileObjDir, false);
-        System.out.println("\nSTAGE 1: Copying the user files to backup directory");
+
         try {
             for (File i : filesToBackup) {
 
