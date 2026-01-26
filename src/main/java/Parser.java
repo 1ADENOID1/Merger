@@ -78,11 +78,11 @@ public class Parser {
         String userDir = arg[1];
         String backupUserFilesDir = arg[2];
 
-        if (!arg[4].equalsIgnoreCase("true") && !arg[4].equalsIgnoreCase("false")) {
+        if (!arg[3].equalsIgnoreCase("true") && !arg[3].equalsIgnoreCase("false")) {
             System.err.println("Error: Parameter \"CREATE_BACKUP_SUBDIR\" must be true or false");
             System.exit(1);
         }
-        boolean createNewDirToBackup = Boolean.parseBoolean(arg[4]);
+        boolean createNewDirToBackup = Boolean.parseBoolean(arg[3]);
 
         String fileEncoding;
         if (arg.length < 6 || arg[5] == null) {
