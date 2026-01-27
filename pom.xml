@@ -26,17 +26,11 @@
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.7.1</version> <!-- Use the latest stable version -->
+                <version>3.7.1</version>
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <!-- Or specify a custom descriptor -->
-                    <!--
-                    <descriptors>
-                        <descriptor>src/assembly/my-custom-assembly.xml</descriptor>
-                    </descriptors>
-                    -->
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
@@ -46,8 +40,8 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <id>make-assembly</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
