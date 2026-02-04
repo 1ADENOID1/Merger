@@ -32,7 +32,7 @@ class Merger {
 
         if (this.defaultSettings.getJsonMap().size() == 0) {           //Если defaultSettings пуст, то цикл не откроется
             mergedMap.putAll(this.userSettings.getJsonMap());
-            this.changes.add("Default settings is empty. Saved all user settings");
+            this.changes.add("Distributive settings is empty. Saved all user settings");
         } else {
             for (Map.Entry<String, JsonElement> defaultElem : this.defaultSettings.getJsonMap().entrySet()) {
                 boolean foundedInUserElements = false;
@@ -55,16 +55,16 @@ class Merger {
                         mergedMap.put(null, userElem.getValue());
 
                         if (distrRootArrayFounded && !userElem.getValue().equals(defaultElem.getValue())) {
-                            this.changes.add("Value of root array in default and user file is different. Saved user value: " + userElem.getValue());
+                            this.changes.add("Value of root array is overwritten. Distributive value: " + defaultElem.getValue() + " Saved user value: " + userElem.getValue());
                         } else if (!distrRootArrayFounded) {
-                            this.changes.add("Root element in default file is object and root element in user file is array. Saved user value: " + userElem.getValue());
+                            this.changes.add("Distributive root object is overwritten by user's root array. Distributive value: " + defaultElem.getValue() + " Saved user value: " + userElem.getValue());
                         }
 
                         userRootArrayFounded = true;
                         break;
                     }
                     if (defaultElem.getKey() == null) {
-                        this.changes.add("Root element in default file is array and root element in user file is object. Saved user value: " + userElem.getValue());
+                        this.changes.add("Distributive root array is overwritten by user root object. Distributive value: " + defaultElem.getValue() + " Saved user root object");
                     }
 
                     if (!distrRootArrayFounded && ((userElem.getKey().startsWith(defaultElem.getKey())
@@ -80,11 +80,9 @@ class Merger {
                         mergedMap.put(userElem.getKey(), userElem.getValue());
 
                         if (!userElem.getValue().equals(defaultElem.getValue())) {
-                            this.changes.add("Default value overwritten by user value. Key: \"" + userElem.getKey() + "\" Saved value: " + userElem.getValue());
+                            this.changes.add("Value overwritten. Key: \"" + userElem.getKey() + "\" Distributive value: " + defaultElem.getValue() + " Saved user value: " + userElem.getValue());
                         }
                     }
-
-
                 }
 
                 if (userRootArrayFounded || distrRootArrayFounded) {
@@ -94,7 +92,7 @@ class Merger {
 
                 if (!foundedInUserElements) {                                               //Добавление новых полей из дистрибутива
                     mergedMap.put(defaultElem.getKey(), defaultElem.getValue());
-                    this.changes.add("Default key: \"" + defaultElem.getKey() + "\" is not found in user file. Saved default value: " + defaultElem.getValue());
+                    this.changes.add("Added new value from distributive. Key: \"" + defaultElem.getKey() + "\". Saved value: " + defaultElem.getValue());
                 }
             }
 
@@ -104,7 +102,7 @@ class Merger {
                             (distrRootArrayFounded || !userElemNew.getKey().startsWith(defaultElemNew.getKey()) && !mergedMap.containsKey(userElemNew.getKey()))
                     ) {
                         mergedMap.put(userElemNew.getKey(), userElemNew.getValue());
-                        this.changes.add("User key: \"" + userElemNew.getKey() + "\" is not found in default file. Saved user value: " + userElemNew.getValue());
+                        this.changes.add("Custom user value (not found in distributive). Key: \"" + userElemNew.getKey() + "\". Saved value: " + userElemNew.getValue());
                     }
                 }
             }

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Parser {
@@ -54,6 +55,13 @@ public class Parser {
         }
 
         return new ArrayList<>(expandedFileList);
+    }
+
+    public static String getCurrentDateTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH mm ss");
+        Date currentDate = new Date();
+
+        return sdf.format(currentDate);
     }
 
     public static void main(String[] arg) {
@@ -140,12 +148,12 @@ public class Parser {
         else if (createNewDirToBackup) {
 
             try {
-                String backupFolderName = "Backup";
+                String backupFolderName = "Backup " + getCurrentDateTime();
                 backupUserFileObjDir = new File(backupUserFilesDir += (File.separator + backupFolderName));
                 int i = 0;
                 while (Files.exists(backupUserFileObjDir.toPath())) {
                     i++;
-                    backupUserFileObjDir = new File(backupUserFilesDir + i);
+                    backupUserFileObjDir = new File(backupUserFilesDir + " copy" + i);
                 }
 
                 Files.createDirectories(backupUserFileObjDir.toPath());
@@ -183,6 +191,8 @@ public class Parser {
 
         List<FilePair> parsedFilePairList = new ArrayList<>();
 
+        List<String> overwrittenFiles = new ArrayList<>();
+
         System.out.println("STAGE 2: Parsing the distributive and user files");
         try {
             for (File distrFile : distrExpandedFileList) {
@@ -202,7 +212,6 @@ public class Parser {
 
                     if (distrRelativeFilePath.equals(userRelativeFilePath) && distrFile.isFile() && userFile.isFile()) {
                         pairFounded = true;
-
                         System.out.println("Parsing user file: " + userFile.getAbsolutePath());
                         userFileJsonMap = new JsonMap(userFile);
                         parsedFilePairList.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
@@ -214,6 +223,7 @@ public class Parser {
 
                 if (!pairFounded && distrFile.isFile()) {
                     System.out.println("Parsed distributive file (user file is not found, distributive file will be copied: " + distrRelativeFilePath);
+                    overwrittenFiles.add(distrRelativeFilePath);
                     userFileJsonMap = new JsonMap(distrFileJsonMap);
                     parsedFilePairList.add(new FilePair(distrRelativeFilePath, distrFileJsonMap, userFileJsonMap));
                 }
@@ -237,6 +247,9 @@ public class Parser {
             System.out.println("Merging file pair: " + pair.name);
             Merger filePairMerger = new Merger(pair.userSettings, pair.distrSettings);
             fileChangesMap.put(pair.name, filePairMerger.getChanges());
+            if (overwrittenFiles.contains(pair.name)) {
+                fileChangesMap.put(pair.name, List.of("User file pair for distributive file is not found. File was copied from distributive"));
+            }
             mergeResultsMap.put(pair.name, new JsonMap(filePairMerger.getMerged()));
         }
 
@@ -264,8 +277,20 @@ public class Parser {
 
         if (logTheChanges) {
             System.out.println("Saving changelog");
-            File changelogFile = new File("changelog.txt");
-            try (FileWriter fw = new FileWriter(changelogFile)) {
+
+            try {
+                String changelogFileName = "changelogs" + File.separator + "changelog " + getCurrentDateTime();
+                File changelogFile = new File(changelogFileName + ".txt");
+                changelogFile.getParentFile().mkdirs();
+                System.out.println(changelogFile.exists());
+
+                int suffix = 0;
+                while (changelogFile.exists()) {
+                    suffix++;
+                    changelogFile = new File(changelogFileName + " copy" + suffix + ".txt");
+                }
+
+                FileWriter fw = new FileWriter(changelogFile);
 
                 for (Map.Entry<String, List<String>> i : fileChangesMap.entrySet()) {
 
@@ -282,7 +307,9 @@ public class Parser {
                 fw.close();
                 System.out.println("Changelog saved");
             } catch (IOException e) {
+                System.err.println("Error: Failed to save changelog. Stacktrace:");
                 e.printStackTrace();
+                System.exit(1);
             }
         }
     }
